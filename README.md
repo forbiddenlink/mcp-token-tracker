@@ -90,10 +90,25 @@ Every MCP server you load adds tool definitions to your AI's context window. Wit
 - **Chalk** - Terminal colors
 - **Tiktoken** - Token counting (OpenAI's official library)
 
+## Usage Tracking (Claude Code)
+
+When used in a Claude Code project, MCP tool calls are automatically logged. The scan output shows which servers you actually use:
+
+```
+Servers:
+  ✓ playwright         (22 tools)     3,769 tokens    12 calls (2h ago)
+  ✓ context7           (2 tools)        995 tokens     8 calls (1d ago)
+  ⚠ MCP_DOCKER         (43 tools)    10,220 tokens     0 calls (never)
+```
+
+Servers with 0 calls get a warning icon, making it easy to identify candidates for removal.
+
+**Setup:** Copy `.claude/settings.json` and `.claude/hooks/` to your Claude Code project to enable tracking.
+
 ## Roadmap
 
 - [x] Connect to actual MCP servers via JSON-RPC (`--live` flag)
-- [ ] Track real tool usage (not just estimates)
+- [x] Track real tool usage via Claude Code hooks
 - [ ] Historical tracking (see usage over time)
 - [ ] Auto-optimize config files
 - [ ] Web dashboard

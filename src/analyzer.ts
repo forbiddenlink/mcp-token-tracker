@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { encoding_for_model } from 'tiktoken';
 import type { MCPConfig } from './scanner.js';
 import { connectAndQuery, type Tool, type ServerConfig } from './connector.js';
+import { getUsageStats, formatTimeAgo } from './usage.js';
 
 interface ServerAnalysis {
   name: string;
@@ -10,6 +11,8 @@ interface ServerAnalysis {
   toolCount?: number;
   isEstimate: boolean;
   error?: string;
+  callCount?: number;
+  lastUsed?: Date | null;
 }
 
 function countToolTokens(tools: Tool[], enc: ReturnType<typeof encoding_for_model>): number {
@@ -40,6 +43,9 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
   console.log(chalk.gray(`   ${config.path}\n`));
 
   const enc = encoding_for_model('gpt-4');
+  const usageStats = getUsageStats();
+  const hasUsageData = usageStats.size > 0;
+
   let totalTokens = 0;
   const serverAnalysis: ServerAnalysis[] = [];
   const failures: Array<{ name: string; error: string }> = [];
@@ -55,6 +61,8 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
       // Clear the "Connecting..." line
       process.stdout.write('\r' + ' '.repeat(50) + '\r');
 
+      const stats = usageStats.get(serverName);
+
       if (result.success && result.tools) {
         const tokens = countToolTokens(result.tools, enc);
         totalTokens += tokens;
@@ -66,6 +74,8 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
           estimatedCost,
           toolCount: result.tools.length,
           isEstimate: false,
+          callCount: stats?.totalCalls ?? 0,
+          lastUsed: stats?.lastUsed ?? null,
         });
       } else {
         // Fall back to estimate
@@ -79,6 +89,8 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
           estimatedCost,
           isEstimate: true,
           error: result.error,
+          callCount: stats?.totalCalls ?? 0,
+          lastUsed: stats?.lastUsed ?? null,
         });
         failures.push({ name: serverName, error: result.error || 'Unknown error' });
       }
@@ -87,12 +99,15 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
       const tokens = estimateTokens(serverConfig, enc);
       totalTokens += tokens;
       const estimatedCost = (tokens / 1000) * 0.002;
+      const stats = usageStats.get(serverName);
 
       serverAnalysis.push({
         name: serverName,
         tokens,
         estimatedCost,
         isEstimate: true,
+        callCount: stats?.totalCalls ?? 0,
+        lastUsed: stats?.lastUsed ?? null,
       });
     }
   }
@@ -102,20 +117,31 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
   // Display results
   console.log(chalk.white('Servers:'));
   for (const analysis of serverAnalysis) {
-    const icon = analysis.isEstimate && liveMode ? chalk.yellow('⚠') : chalk.green('✓');
+    // Icon: warning if estimate in live mode, or if no calls and we have usage data
+    const noUsage = hasUsageData && analysis.callCount === 0;
+    const icon = (analysis.isEstimate && liveMode) || noUsage
+      ? chalk.yellow('⚠')
+      : chalk.green('✓');
+
     const toolInfo = analysis.toolCount !== undefined
       ? chalk.gray(`(${analysis.toolCount} tools)`.padEnd(12))
       : liveMode && analysis.isEstimate
         ? chalk.gray('(estimate)'.padEnd(12))
         : '            ';
+
     const tokenStr = analysis.isEstimate && liveMode
       ? `~${analysis.tokens.toLocaleString()}`
       : analysis.tokens.toLocaleString();
 
+    // Usage info (only show if we have usage data)
+    const usageStr = hasUsageData
+      ? chalk.cyan(`${String(analysis.callCount).padStart(4)} calls `) +
+        chalk.gray(`(${formatTimeAgo(analysis.lastUsed ?? null)})`)
+      : '';
+
     console.log(
-      `  ${icon} ${chalk.white(analysis.name.padEnd(22))} ${toolInfo}` +
-      `${chalk.yellow(tokenStr.padStart(7))} tokens ` +
-      `${chalk.gray(`($${analysis.estimatedCost.toFixed(4)}/session)`)}`
+      `  ${icon} ${chalk.white(analysis.name.padEnd(20))} ${toolInfo}` +
+      `${chalk.yellow(tokenStr.padStart(7))} tokens  ${usageStr}`
     );
   }
 
