@@ -15,7 +15,9 @@ program
 program
   .command('scan')
   .description('Scan for MCP configurations and calculate token usage')
-  .action(async () => {
+  .option('--live', 'Connect to servers to get real tool definitions (slower but accurate)')
+  .action(async (options: { live?: boolean }) => {
+    const liveMode = options.live ?? false;
     console.log(chalk.blue.bold('\n🔍 MCP Token Cost Tracker\n'));
     
     try {
@@ -34,10 +36,14 @@ program
       }
       
       console.log(chalk.green(`✓ Found ${configs.length} configuration(s)\n`));
-      
+
+      if (liveMode) {
+        console.log(chalk.cyan('🔌 Live mode: connecting to servers...\n'));
+      }
+
       // Analyze each config
       for (const config of configs) {
-        await analyzeTokens(config);
+        await analyzeTokens(config, liveMode);
       }
       
     } catch (error) {

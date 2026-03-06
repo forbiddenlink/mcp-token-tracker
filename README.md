@@ -33,12 +33,16 @@ pnpm dev
 ## Usage
 
 ```bash
-# Scan for MCP configs and analyze token usage
+# Scan for MCP configs and analyze token usage (fast estimates)
 pnpm dev
+
+# Connect to servers for real token counts (slower but accurate)
+npx tsx src/cli.ts scan --live
 
 # Or after building:
 pnpm build
 pnpm start scan
+pnpm start scan --live
 ```
 
 ## Example Output
@@ -88,7 +92,7 @@ Every MCP server you load adds tool definitions to your AI's context window. Wit
 
 ## Roadmap
 
-- [ ] Connect to actual MCP servers via JSON-RPC
+- [x] Connect to actual MCP servers via JSON-RPC (`--live` flag)
 - [ ] Track real tool usage (not just estimates)
 - [ ] Historical tracking (see usage over time)
 - [ ] Auto-optimize config files
