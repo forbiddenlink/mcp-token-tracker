@@ -14,6 +14,7 @@
   "keywords": ["mcp", "tokens", "cursor", "windsurf", "claude", "ai", "cost"],
   "author": "Elizabeth Stein",
   "license": "MIT",
+  "private": false,
   "packageManager": "pnpm@10.29.1",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
