@@ -11,7 +11,15 @@
     "dev": "tsx src/cli.ts scan",
     "start": "node dist/cli.js"
   },
-  "keywords": ["mcp", "tokens", "cursor", "windsurf", "claude", "ai", "cost"],
+  "keywords": [
+    "mcp",
+    "tokens",
+    "cursor",
+    "windsurf",
+    "claude",
+    "ai",
+    "cost"
+  ],
   "author": "Elizabeth Stein",
   "license": "MIT",
   "private": false,
@@ -26,5 +34,13 @@
     "@types/node": "^25.3.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "express-rate-limit": ">=8.2.2",
+      "hono": ">=4.12.12",
+      "path-to-regexp": ">=8.4.0",
+      "@hono/node-server": ">=1.19.13"
+    }
   }
 }
