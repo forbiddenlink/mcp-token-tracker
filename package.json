@@ -36,12 +36,12 @@
     "update-notifier": "^7.3.1"
   },
   "devDependencies": {
-    "@types/node": "^25.9.4",
+    "@types/node": "^25.9.5",
     "@types/pino": "^7.0.5",
     "@types/update-notifier": "^6.0.8",
-    "tsx": "^4.22.5",
+    "tsx": "^4.23.0",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.9"
+    "vitest": "^4.1.10"
   },
   "pnpm": {
     "overrides": {
