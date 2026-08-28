@@ -16,34 +16,50 @@ program
   .command('scan')
   .description('Scan for MCP configurations and calculate token usage')
   .option('--live', 'Connect to servers to get real tool definitions (slower but accurate)')
-  .action(async (options: { live?: boolean }) => {
+  .option('--json', 'Print machine-readable JSON')
+  .action(async (options: { live?: boolean; json?: boolean }) => {
     const liveMode = options.live ?? false;
-    console.log(chalk.blue.bold('\n🔍 MCP Token Cost Tracker\n'));
+    const jsonMode = options.json ?? false;
+    if (!jsonMode) console.log(chalk.blue.bold('\n🔍 MCP Token Cost Tracker\n'));
     
     try {
       // Find MCP configs
-      console.log(chalk.gray('Scanning for MCP configurations...'));
+      if (!jsonMode) console.log(chalk.gray('Scanning for MCP configurations...'));
       const configs = await scanMCPConfigs();
       
       if (configs.length === 0) {
-        console.log(chalk.yellow('\n⚠️  No MCP configurations found'));
-        console.log(chalk.gray('Looking in:'));
-        console.log(chalk.gray('  - ~/Library/Application Support/Claude/claude_desktop_config.json'));
-        console.log(chalk.gray('  - ~/.claude.json'));
-        console.log(chalk.gray('  - ~/.cursor/mcp_config.json'));
-        console.log(chalk.gray('  - ~/.windsurf/mcp.json'));
+        if (jsonMode) {
+          console.log(JSON.stringify({ configs: [], configCount: 0, totalTokens: 0, monthlyCost: 0 }, null, 2));
+        } else {
+          console.log(chalk.yellow('\n⚠️  No MCP configurations found'));
+          console.log(chalk.gray('Looking in:'));
+          console.log(chalk.gray('  - ~/Library/Application Support/Claude/claude_desktop_config.json'));
+          console.log(chalk.gray('  - ~/.claude.json'));
+          console.log(chalk.gray('  - ~/.cursor/mcp_config.json'));
+          console.log(chalk.gray('  - ~/.windsurf/mcp.json'));
+        }
         return;
       }
       
-      console.log(chalk.green(`✓ Found ${configs.length} configuration(s)\n`));
+      if (!jsonMode) console.log(chalk.green(`✓ Found ${configs.length} configuration(s)\n`));
 
-      if (liveMode) {
+      if (liveMode && !jsonMode) {
         console.log(chalk.cyan('🔌 Live mode: connecting to servers...\n'));
       }
 
       // Analyze each config
+      const analyses = [];
       for (const config of configs) {
-        await analyzeTokens(config, liveMode);
+        analyses.push(await analyzeTokens(config, liveMode, { print: !jsonMode }));
+      }
+
+      if (jsonMode) {
+        console.log(JSON.stringify({
+          configs: analyses,
+          configCount: analyses.length,
+          totalTokens: analyses.reduce((sum, item) => sum + item.totalTokens, 0),
+          monthlyCost: analyses.reduce((sum, item) => sum + item.monthlyCost, 0),
+        }, null, 2));
       }
       
     } catch (error) {

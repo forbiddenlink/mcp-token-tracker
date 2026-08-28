@@ -36,6 +36,9 @@ pnpm dev
 # Scan for MCP configs and analyze token usage (fast estimates)
 pnpm dev
 
+# Machine-readable output for hq/agents
+pnpm start scan --json
+
 # Connect to servers for real token counts (slower but accurate)
 npx tsx src/cli.ts scan --live
 

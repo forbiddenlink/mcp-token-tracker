@@ -1,0 +1,19 @@
+{
+	"allowedForCodex": true,
+	"automationLevel": "manual",
+	"confidentialContext": "none",
+	"context": "tooling",
+	"hosting": [],
+	"kind": "tool",
+	"lastReviewedAt": "2026-08-27",
+	"lifecycle": "active",
+	"observability": [],
+	"ownerContext": "tooling",
+	"surface": "internal",
+	"systems": ["solo-control-tower", "agent-ops"],
+	"tags": ["agents", "mcp", "token-usage"],
+	"urls": {
+		"repository": "https://github.com/forbiddenlink/mcp-token-tracker"
+	},
+	"notes": "Tracks MCP/token usage and should feed hq usage and agent-ops reporting."
+}

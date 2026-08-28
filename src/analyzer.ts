@@ -4,7 +4,7 @@ import type { MCPConfig } from './scanner.js';
 import { connectAndQuery, type Tool, type ServerConfig } from './connector.js';
 import { getUsageStats, formatTimeAgo } from './usage.js';
 
-interface ServerAnalysis {
+export interface ServerAnalysis {
   name: string;
   tokens: number;
   estimatedCost: number;
@@ -38,9 +38,25 @@ function estimateTokens(serverConfig: unknown, enc: ReturnType<typeof encoding_f
   return configTokens + (estimatedTools * tokensPerTool);
 }
 
-export async function analyzeTokens(config: MCPConfig, liveMode = false) {
-  console.log(chalk.cyan.bold(`\n📁 ${config.name}`));
-  console.log(chalk.gray(`   ${config.path}\n`));
+export interface ConfigAnalysis {
+  name: string;
+  path: string;
+  totalTokens: number;
+  monthlyCost: number;
+  servers: ServerAnalysis[];
+  failures: Array<{ name: string; error: string }>;
+}
+
+export async function analyzeTokens(
+  config: MCPConfig,
+  liveMode = false,
+  opts: { print?: boolean } = {}
+): Promise<ConfigAnalysis> {
+  const shouldPrint = opts.print ?? true;
+  if (shouldPrint) {
+    console.log(chalk.cyan.bold(`\n📁 ${config.name}`));
+    console.log(chalk.gray(`   ${config.path}\n`));
+  }
 
   const enc = encoding_for_model('gpt-4');
   const usageStats = getUsageStats();
@@ -53,13 +69,13 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
   // Analyze each server
   for (const [serverName, serverConfig] of Object.entries(config.servers)) {
     if (liveMode) {
-      process.stdout.write(chalk.gray(`  Connecting to ${serverName}...`));
+      if (shouldPrint) process.stdout.write(chalk.gray(`  Connecting to ${serverName}...`));
 
       const typedConfig = serverConfig as ServerConfig;
       const result = await connectAndQuery(serverName, typedConfig);
 
       // Clear the "Connecting..." line
-      process.stdout.write('\r' + ' '.repeat(50) + '\r');
+      if (shouldPrint) process.stdout.write('\r' + ' '.repeat(50) + '\r');
 
       const stats = usageStats.get(serverName);
 
@@ -114,6 +130,18 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
 
   enc.free();
 
+  const monthlyCost = (totalTokens / 1000) * 0.002 * 30; // 30 sessions/month estimate
+  const result: ConfigAnalysis = {
+    name: config.name,
+    path: config.path,
+    totalTokens,
+    monthlyCost,
+    servers: serverAnalysis,
+    failures,
+  };
+
+  if (!shouldPrint) return result;
+
   // Display results
   console.log(chalk.white('Servers:'));
   for (const analysis of serverAnalysis) {
@@ -153,7 +181,6 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
     `${chalk.gray(`(~${(totalTokens / 1000).toFixed(1)}k)`)}`
   );
 
-  const monthlyCost = (totalTokens / 1000) * 0.002 * 30; // 30 sessions/month estimate
   console.log(
     `  ${chalk.white.bold('Est. Monthly Cost:')} ` +
     `${chalk.green.bold(`$${monthlyCost.toFixed(2)}`)}`
@@ -179,4 +206,6 @@ export async function analyzeTokens(config: MCPConfig, liveMode = false) {
   } else {
     console.log(chalk.green('\n✓ Token usage looks good!'));
   }
+
+  return result;
 }

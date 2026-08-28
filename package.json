@@ -8,8 +8,13 @@
   },
   "scripts": {
     "build": "tsc",
+    "check": "pnpm run build && pnpm run test",
     "dev": "tsx src/cli.ts scan",
-    "start": "node dist/cli.js"
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "security": "pnpm audit --audit-level high",
+    "audit": "pnpm audit --audit-level high",
+    "lint-baseline": "biome check ."
   },
   "keywords": [
     "mcp",
@@ -41,6 +46,7 @@
     "@types/update-notifier": "^6.0.8",
     "tsx": "^4.23.11",
     "typescript": "^7.0.2",
+    "vite": "^8.0.16",
     "vitest": "^4.1.10"
   },
   "pnpm": {
