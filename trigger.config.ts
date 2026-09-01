@@ -3,8 +3,11 @@ import { syncVercelEnvVars } from "@trigger.dev/build/extensions/core";
 
 export default defineConfig({
   project:
-    process.env.TRIGGER_PROJECT_REF || "proj_REPLACE_WITH_YOUR_PROJECT_ID",
-  runtime: "node",
+    process.env.TRIGGER_PROJECT_REF ??
+    (() => {
+      throw new Error("TRIGGER_PROJECT_REF is not set");
+    })(),
+  runtime: "node-24",
   maxDuration: 300,
   logLevel: "log",
   retries: {
