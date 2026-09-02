@@ -51,10 +51,10 @@
   },
   "pnpm": {
     "overrides": {
-      "express-rate-limit": ">=8.2.2",
-      "hono": ">=4.12.18",
-      "path-to-regexp": ">=8.4.0",
-      "@hono/node-server": ">=1.19.13",
+      "express-rate-limit": ">=8.2.2 <9",
+      "hono": ">=4.12.18 <5",
+      "path-to-regexp": ">=8.4.0 <9",
+      "@hono/node-server": ">=1.19.13 <3",
       "fast-uri": ">=4.0.1 <5",
       "vite": ">=8.0.16 <9"
     }
