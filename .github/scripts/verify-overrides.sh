@@ -63,11 +63,22 @@ while IFS= read -r lock; do
 
     # strip a parent> prefix and a trailing @<major>; scoped names keep their leading @
     pkg="${key##*>}"
+    onlymajor=$(printf '%s' "$pkg" | sed -nE 's/.*@([0-9]+)$/\1/p')
     pkg=$(printf '%s' "$pkg" | sed -E 's/@[0-9]+$//')
 
     # scoped packages are QUOTED in the lockfile — match both forms
     vers=$(grep -oE "^  '?${pkg}@[0-9]+\.[0-9]+\.[0-9]+" "$lock" 2>/dev/null \
            | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | sort -uV)
+
+    # A per-major key (`react-router@8`) governs ONLY that major. Comparing it against a
+    # v7 install it was never meant to touch reports a break that does not exist - that
+    # false positive fired on 3 of 4 repos before this filter, and a check that cries
+    # wolf gets switched off.
+    if [ -n "$onlymajor" ]; then
+      vers=$(printf '%s\n' $vers | awk -F. -v m="$onlymajor" '$1==m')
+      [ -z "$vers" ] && { echo "   ok   $key (major $onlymajor not installed here)"; continue; }
+    fi
+
     [ -z "$vers" ] && { echo "   ok   $key (not installed here)"; continue; }
 
     # Compare the HIGHEST resolved version, not the lowest.
