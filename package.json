@@ -28,7 +28,7 @@
   "author": "Elizabeth Stein",
   "license": "MIT",
   "private": false,
-  "packageManager": "pnpm@10.29.1",
+  "packageManager": "pnpm@10.34.5",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
     "boxen": "^8.0.1",
