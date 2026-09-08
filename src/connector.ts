@@ -22,10 +22,18 @@ export interface ServerConfig {
 
 const TIMEOUT_MS = 10_000;
 
-function timeout(ms: number): Promise<never> {
-  return new Promise((_, reject) => {
-    setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms);
-  });
+async function withTimeout<T>(operation: Promise<T>, ms: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`Timeout after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function connectAndQuery(
@@ -51,16 +59,10 @@ export async function connectAndQuery(
     );
 
     // Connect with timeout (connect() calls start() internally)
-    await Promise.race([
-      client!.connect(transport!),
-      timeout(TIMEOUT_MS)
-    ]);
+    await withTimeout(client.connect(transport), TIMEOUT_MS);
 
     // Get tools with timeout
-    const response = await Promise.race([
-      client.listTools(),
-      timeout(TIMEOUT_MS)
-    ]);
+    const response = await withTimeout(client.listTools(), TIMEOUT_MS);
 
     const tools: Tool[] = response.tools.map(t => ({
       name: t.name,

@@ -91,6 +91,23 @@ describe('connectAndQuery', () => {
     expect(result.error).toBe('Tools not available');
   });
 
+  it.each(['success', 'connect failure', 'list failure'])('clears deadline timers after %s', async (outcome) => {
+    mockClientInstance.connect.mockResolvedValue(undefined);
+    mockClientInstance.listTools.mockResolvedValue({ tools: [] });
+    if (outcome === 'connect failure') {
+      mockClientInstance.connect.mockRejectedValue(new Error('Connect failed'));
+    }
+    if (outcome === 'list failure') {
+      mockClientInstance.listTools.mockRejectedValue(new Error('List failed'));
+    }
+
+    const result = await connectAndQuery('test-server', testConfig);
+
+    expect(result.success).toBe(outcome === 'success');
+    expect(vi.getTimerCount()).toBe(0);
+    expect(mockTransportInstance.close).toHaveBeenCalledOnce();
+  });
+
   it('handles timeout', async () => {
     // Connection never resolves
     mockClientInstance.connect.mockImplementation(() => new Promise(() => {}));
