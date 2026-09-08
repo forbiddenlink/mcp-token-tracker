@@ -46,25 +46,25 @@ importers:
         version: 7.3.1
     devDependencies:
       '@types/node':
-        specifier: ^26.4.0
+        specifier: 26.4.0
         version: 26.4.0
       '@types/pino':
-        specifier: ^7.0.5
+        specifier: 7.0.5
         version: 7.0.5
       '@types/update-notifier':
-        specifier: ^6.0.8
+        specifier: 6.0.8
         version: 6.0.8
       tsx:
-        specifier: ^4.23.13
+        specifier: 4.23.13
         version: 4.23.13
       typescript:
-        specifier: ^7.0.2
+        specifier: 7.0.2
         version: 7.0.2
       vite:
         specifier: '>=8.0.16 <9'
         version: 8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(tsx@4.23.13)
       vitest:
-        specifier: ^4.1.11
+        specifier: 4.1.11
         version: 4.1.11(@types/node@26.4.0)(vite@8.2.2(@types/node@26.4.0)(esbuild@0.28.2)(tsx@4.23.13))
 
 packages:
