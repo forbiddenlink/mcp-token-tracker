@@ -1,32 +1,32 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, readFileSync } from 'fs';
-import { scanMCPConfigs } from './scanner.js';
+import { existsSync, readFileSync } from 'node:fs'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { scanMCPConfigs } from './scanner.js'
 
-vi.mock('fs');
+vi.mock('fs')
 
-const mockExistsSync = vi.mocked(existsSync);
-const mockReadFileSync = vi.mocked(readFileSync);
+const mockExistsSync = vi.mocked(existsSync)
+const mockReadFileSync = vi.mocked(readFileSync)
 
 describe('scanMCPConfigs', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks()
     // Default: no files exist
-    mockExistsSync.mockReturnValue(false);
-  });
+    mockExistsSync.mockReturnValue(false)
+  })
 
   afterEach(() => {
-    vi.restoreAllMocks();
-  });
+    vi.restoreAllMocks()
+  })
 
   it('returns empty array when no config files exist', async () => {
-    const configs = await scanMCPConfigs();
-    expect(configs).toEqual([]);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toEqual([])
+  })
 
   it('parses valid Claude Desktop config', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('Claude/claude_desktop_config.json');
-    });
+      return String(path).includes('Claude/claude_desktop_config.json')
+    })
 
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
@@ -37,19 +37,19 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
+    const configs = await scanMCPConfigs()
 
-    expect(configs).toHaveLength(1);
-    expect(configs[0].name).toBe('Claude Desktop');
-    expect(configs[0].servers).toHaveProperty('playwright');
-  });
+    expect(configs).toHaveLength(1)
+    expect(configs[0].name).toBe('Claude Desktop')
+    expect(configs[0].servers).toHaveProperty('playwright')
+  })
 
   it('parses config with "servers" key (alternative format)', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('.cursor/mcp_config.json');
-    });
+      return String(path).includes('.cursor/mcp_config.json')
+    })
 
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
@@ -60,43 +60,43 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
+    const configs = await scanMCPConfigs()
 
-    expect(configs).toHaveLength(1);
-    expect(configs[0].name).toBe('Cursor');
-  });
+    expect(configs).toHaveLength(1)
+    expect(configs[0].name).toBe('Cursor')
+  })
 
   it('skips files with invalid JSON', async () => {
-    mockExistsSync.mockReturnValue(true);
-    mockReadFileSync.mockReturnValue('{ invalid json }');
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue('{ invalid json }')
 
     // Should not throw
-    const configs = await scanMCPConfigs();
-    expect(configs).toEqual([]);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toEqual([])
+  })
 
   it('skips files without MCP server structure', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('Claude/claude_desktop_config.json');
-    });
+      return String(path).includes('Claude/claude_desktop_config.json')
+    })
 
     // Valid JSON but not MCP config structure
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
         someOtherKey: 'value',
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
-    expect(configs).toEqual([]);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toEqual([])
+  })
 
   it('skips servers without command/transport/url', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('Claude/claude_desktop_config.json');
-    });
+      return String(path).includes('Claude/claude_desktop_config.json')
+    })
 
     // Has mcpServers but server config lacks required fields
     mockReadFileSync.mockReturnValue(
@@ -107,16 +107,16 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
-    expect(configs).toEqual([]);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toEqual([])
+  })
 
   it('accepts servers with transport field', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('Claude/claude_desktop_config.json');
-    });
+      return String(path).includes('Claude/claude_desktop_config.json')
+    })
 
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
@@ -127,16 +127,16 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
-    expect(configs).toHaveLength(1);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toHaveLength(1)
+  })
 
   it('accepts servers with url field', async () => {
     mockExistsSync.mockImplementation((path) => {
-      return String(path).includes('Claude/claude_desktop_config.json');
-    });
+      return String(path).includes('Claude/claude_desktop_config.json')
+    })
 
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
@@ -146,14 +146,14 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
-    expect(configs).toHaveLength(1);
-  });
+    const configs = await scanMCPConfigs()
+    expect(configs).toHaveLength(1)
+  })
 
   it('finds multiple config files when they exist', async () => {
-    mockExistsSync.mockReturnValue(true);
+    mockExistsSync.mockReturnValue(true)
 
     mockReadFileSync.mockReturnValue(
       JSON.stringify({
@@ -164,10 +164,10 @@ describe('scanMCPConfigs', () => {
           },
         },
       })
-    );
+    )
 
-    const configs = await scanMCPConfigs();
+    const configs = await scanMCPConfigs()
     // Should find all 4 locations
-    expect(configs).toHaveLength(4);
-  });
-});
+    expect(configs).toHaveLength(4)
+  })
+})
