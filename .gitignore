@@ -35,3 +35,6 @@ test-results/
 # Vercel
 .vercel
 .env*
+
+# Claude Code tsc watcher cache (not source)
+.claude/tsc-cache/
