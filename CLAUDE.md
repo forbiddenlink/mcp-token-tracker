@@ -30,7 +30,7 @@ pnpm start            # node dist/cli.js
 pnpm check            # build + test
 pnpm test             # vitest run
 pnpm lint-baseline    # biome check .
-pnpm audit            # pnpm audit --audit-level high (alias: pnpm security)
+pnpm audit            # pnpm audit --audit-level high
 ```
 
 CLI usage: `pnpm dev` (fast estimate), `pnpm start scan --json` (machine-readable), `npx tsx
@@ -61,8 +61,8 @@ src/cli.ts scan --live` (connects to servers for real tool definitions).
 ## Testing
 
 Vitest, colocated `*.test.ts` files, v8 coverage. `pnpm test` runs once; `pnpm check` runs build
-then test. CI (`.github/workflows/ci.yml`) only runs install + build, it does not run `pnpm test`
-or `pnpm lint-baseline`.
+then test. CI (`.github/workflows/ci.yml`) runs install + build + test. It does not run
+`pnpm lint-baseline` (biome check currently fails on main; add the CI step once that's clean).
 
 ## Env vars
 
@@ -76,16 +76,16 @@ or `pnpm lint-baseline`.
 
 ## Gotchas
 
-- `trigger.config.ts` imports `@trigger.dev/sdk/v3` and
-  `@trigger.dev/build/extensions/core`, but neither package is in `package.json`. The
-  Trigger.dev integration appears scaffolded but unfinished (`src/trigger/` has only a
-  `.gitkeep`); anything that loads this config will fail to resolve those imports.
+- `trigger.config.ts` imports `@trigger.dev/sdk/v3` and `@trigger.dev/build/extensions/core`;
+  both packages are declared in `package.json` (`@trigger.dev/sdk` in dependencies,
+  `@trigger.dev/build` in devDependencies, matching versions per Trigger.dev's own requirement).
+  The Trigger.dev integration is still otherwise unfinished (`src/trigger/` has only a
+  `.gitkeep`).
 - `pnpm.overrides` in `package.json` pins several transitive CVE fixes
-  (express-rate-limit, hono, path-to-regexp, @hono/node-server, fast-uri, vite).
+  (express-rate-limit, hono, path-to-regexp, @hono/node-server, fast-uri, vite, qs).
   `.github/workflows/verify-overrides.yml` exists specifically because a lockfile
   regenerated with the wrong pnpm version can silently drop this block; don't remove
   overrides without checking that workflow.
-- `security` and `audit` npm scripts are identical (both `pnpm audit --audit-level high`).
 
 ## Claude Code
 
