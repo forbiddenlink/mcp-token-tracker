@@ -1,5 +1,5 @@
-import pino from 'pino';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto'
+import pino from 'pino'
 
 /**
  * Pino structured logging for mcp-token-tracker
@@ -15,31 +15,29 @@ import { randomUUID } from 'crypto';
  *   reqLogger.info('Processing scan request');
  */
 
-const isDevelopment = process.env['NODE_ENV'] === 'development';
+const isDevelopment = process.env.NODE_ENV === 'development'
 
 export const logger = pino({
-  level: process.env['LOG_LEVEL'] || 'info',
-  transport: isDevelopment
-    ? { target: 'pino-pretty', options: { colorize: true } }
-    : undefined,
+  level: process.env.LOG_LEVEL || 'info',
+  transport: isDevelopment ? { target: 'pino-pretty', options: { colorize: true } } : undefined,
   base: {
     service: 'mcp-token-tracker',
-    env: process.env['NODE_ENV'] || 'development',
+    env: process.env.NODE_ENV || 'development',
   },
   timestamp: pino.stdTimeFunctions.isoTime,
-});
+})
 
 // Module-specific child loggers
-export const scannerLogger = logger.child({ module: 'scanner' });
-export const analyzerLogger = logger.child({ module: 'analyzer' });
-export const connectorLogger = logger.child({ module: 'connector' });
-export const usageLogger = logger.child({ module: 'usage' });
+export const scannerLogger = logger.child({ module: 'scanner' })
+export const analyzerLogger = logger.child({ module: 'analyzer' })
+export const connectorLogger = logger.child({ module: 'connector' })
+export const usageLogger = logger.child({ module: 'usage' })
 
 /**
  * Generate a correlation ID for request tracing
  */
 export function generateCorrelationId(): string {
-  return `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`;
+  return `${Date.now().toString(36)}-${randomUUID().slice(0, 8)}`
 }
 
 /**
@@ -48,7 +46,7 @@ export function generateCorrelationId(): string {
 export function createRequestLogger(correlationId?: string) {
   return logger.child({
     correlationId: correlationId || generateCorrelationId(),
-  });
+  })
 }
 
 /**
@@ -59,8 +57,8 @@ export function logPerformance(
   durationMs: number,
   context?: Record<string, unknown>
 ): void {
-  const level = durationMs > 5000 ? 'warn' : 'info';
-  logger[level]({ operation, durationMs, ...context }, `Performance: ${operation}`);
+  const level = durationMs > 5000 ? 'warn' : 'info'
+  logger[level]({ operation, durationMs, ...context }, `Performance: ${operation}`)
 }
 
-export default logger;
+export default logger

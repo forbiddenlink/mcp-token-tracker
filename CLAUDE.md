@@ -61,8 +61,8 @@ src/cli.ts scan --live` (connects to servers for real tool definitions).
 ## Testing
 
 Vitest, colocated `*.test.ts` files, v8 coverage. `pnpm test` runs once; `pnpm check` runs build
-then test. CI (`.github/workflows/ci.yml`) runs install + build + test. It does not run
-`pnpm lint-baseline` (biome check currently fails on main; add the CI step once that's clean).
+then test. CI (`.github/workflows/ci.yml`) runs install + lint (`pnpm lint-baseline`) + build +
+test.
 
 ## Env vars
 
