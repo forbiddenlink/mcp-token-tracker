@@ -12,7 +12,6 @@
     "dev": "tsx src/cli.ts scan",
     "start": "node dist/cli.js",
     "test": "vitest run",
-    "security": "pnpm audit --audit-level high",
     "audit": "pnpm audit --audit-level high",
     "lint-baseline": "biome check ."
   },
@@ -31,6 +30,7 @@
   "packageManager": "pnpm@10.34.5",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "@trigger.dev/sdk": "^4.6.3",
     "boxen": "^8.0.1",
     "chalk": "^6.0.0",
     "commander": "^15.0.0",
@@ -41,6 +41,7 @@
     "update-notifier": "^7.3.1"
   },
   "devDependencies": {
+    "@trigger.dev/build": "^4.6.3",
     "@types/node": "26.5.1",
     "@types/pino": "7.0.5",
     "@types/update-notifier": "6.0.8",
