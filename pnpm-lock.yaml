@@ -53,7 +53,7 @@ importers:
         specifier: 2.5.14
         version: 2.5.14
       '@trigger.dev/build':
-        specifier: ^4.6.3
+        specifier: 4.6.3
         version: 4.6.3(typescript@7.0.2)(zod@4.3.6)
       '@types/node':
         specifier: 26.6.1
