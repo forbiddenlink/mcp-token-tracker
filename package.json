@@ -29,7 +29,7 @@
   "private": false,
   "packageManager": "pnpm@10.34.7",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.32.0",
     "@trigger.dev/sdk": "^4.6.3",
     "boxen": "^8.0.1",
     "chalk": "^6.0.0",
