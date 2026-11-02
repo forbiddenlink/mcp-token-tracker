@@ -49,7 +49,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
-    "@trigger.dev/build": "^4.8.1",
+    "@trigger.dev/build": "4.8.1",
     "@types/node": "26.6.6",
     "@types/pino": "7.0.5",
     "@types/update-notifier": "6.0.9",
