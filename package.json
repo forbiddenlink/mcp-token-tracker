@@ -6,8 +6,14 @@
   "bin": {
     "mcp-token-tracker": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.map"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "pnpm run build && pnpm run test",
     "check": "pnpm run build && pnpm run test",
     "dev": "tsx src/cli.ts scan",
     "start": "node dist/cli.js",
