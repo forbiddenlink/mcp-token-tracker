@@ -48,7 +48,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
+    "@biomejs/biome": "2.6.4",
     "@trigger.dev/build": "4.8.1",
     "@types/node": "26.6.6",
     "@types/pino": "7.0.5",
