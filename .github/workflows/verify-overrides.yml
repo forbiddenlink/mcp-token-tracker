@@ -11,17 +11,17 @@ name: Verify pnpm overrides
 on:
   pull_request:
     paths:
-      - '**/package.json'
-      - '**/pnpm-lock.yaml'
-      - '**/pnpm-workspace.yaml'
+      - "**/package.json"
+      - "**/pnpm-lock.yaml"
+      - "**/pnpm-workspace.yaml"
   push:
     branches: [main, master]
     paths:
-      - '**/package.json'
-      - '**/pnpm-lock.yaml'
-      - '**/pnpm-workspace.yaml'
+      - "**/package.json"
+      - "**/pnpm-lock.yaml"
+      - "**/pnpm-workspace.yaml"
   schedule:
-    - cron: '0 7 * * 1'
+    - cron: "0 7 * * 1"
   workflow_dispatch:
 
 permissions:
