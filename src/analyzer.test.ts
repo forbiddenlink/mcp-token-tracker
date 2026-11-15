@@ -5,6 +5,7 @@ vi.mock('./usage.js', () => ({
     new Map([
       ['beta', { totalCalls: 5, lastUsed: new Date() }],
       ['alpha', { totalCalls: 1, lastUsed: new Date() }],
+      ['plugin_gamma_gamma', { totalCalls: 8, lastUsed: new Date() }],
     ]),
   formatTimeAgo: () => 'just now',
 }))
@@ -44,7 +45,12 @@ describe('estimate mode (no --live)', () => {
   it('does not order servers by an identical constant token count', async () => {
     const result = await analyzeTokens(config, false, { print: false })
     // Order by observed usage (calls desc), then name; not by the estimate.
-    expect(result.servers.map((s) => s.name)).toEqual(['beta', 'alpha', 'gamma'])
+    expect(result.servers.map((s) => s.name)).toEqual(['gamma', 'beta', 'alpha'])
+  })
+
+  it('credits a plugin-prefixed log name to the bare config key', async () => {
+    const result = await analyzeTokens(config, false, { print: false })
+    expect(result.servers.find((s) => s.name === 'gamma')?.callCount).toBe(8)
   })
 
   it('labels printed numbers and cost as estimates and points at --live', async () => {

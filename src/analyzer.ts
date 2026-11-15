@@ -3,6 +3,7 @@ import { encoding_for_model } from 'tiktoken'
 import { connectAndQuery, type ServerConfig, type Tool } from './connector.js'
 import type { MCPConfig } from './scanner.js'
 import { formatTimeAgo, getUsageStats } from './usage.js'
+import { lookupUsage } from './usage-match.js'
 
 /**
  * Placeholder rate used only to give a rough dollar figure. It is not a current
@@ -92,7 +93,7 @@ export async function analyzeTokens(
       // Clear the "Connecting..." line
       if (shouldPrint) process.stdout.write(`\r${' '.repeat(50)}\r`)
 
-      const stats = usageStats.get(serverName)
+      const stats = lookupUsage(usageStats, serverName)
 
       if (result.success && result.tools) {
         const tokens = countToolTokens(result.tools, enc)
@@ -130,7 +131,7 @@ export async function analyzeTokens(
       const tokens = estimateTokens(serverConfig, enc)
       totalTokens += tokens
       const estimatedCost = (tokens / 1000) * PLACEHOLDER_USD_PER_1K_TOKENS
-      const stats = usageStats.get(serverName)
+      const stats = lookupUsage(usageStats, serverName)
 
       serverAnalysis.push({
         name: serverName,
