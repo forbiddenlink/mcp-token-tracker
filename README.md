@@ -13,12 +13,12 @@ It is for people who run several MCP servers in Claude Desktop, Claude Code, Cur
 
 ## Supported tools
 
-| Tool | Config path |
-|------|-------------|
+| Tool           | Config path                                                       |
+| -------------- | ----------------------------------------------------------------- |
 | Claude Desktop | `~/Library/Application Support/Claude/claude_desktop_config.json` |
-| Claude Code | `~/.claude.json` |
-| Cursor | `~/.cursor/mcp_config.json` |
-| Windsurf | `~/.windsurf/mcp.json` |
+| Claude Code    | `~/.claude.json`                                                  |
+| Cursor         | `~/.cursor/mcp_config.json`                                       |
+| Windsurf       | `~/.windsurf/mcp.json`                                            |
 
 ## Getting started
 
