@@ -30,7 +30,11 @@ program
       if (configs.length === 0) {
         if (jsonMode) {
           console.log(
-            JSON.stringify({ configs: [], configCount: 0, totalTokens: 0, monthlyCost: 0 }, null, 2)
+            JSON.stringify(
+              { configs: [], configCount: 0, totalTokens: 0, monthlyCost: 0, isEstimate: false },
+              null,
+              2
+            )
           )
         } else {
           console.log(chalk.yellow('\n⚠️  No MCP configurations found'))
@@ -65,6 +69,9 @@ program
               configCount: analyses.length,
               totalTokens: analyses.reduce((sum, item) => sum + item.totalTokens, 0),
               monthlyCost: analyses.reduce((sum, item) => sum + item.monthlyCost, 0),
+              isEstimate: analyses.some((item) => item.isEstimate),
+              costNote:
+                'monthlyCost uses a placeholder rate of $0.002 per 1k tokens, not a current model price',
             },
             null,
             2
