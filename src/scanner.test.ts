@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { scanMCPConfigs } from './scanner.js'
 
-vi.mock('fs')
+vi.mock('node:fs', () => ({ existsSync: vi.fn(), readFileSync: vi.fn() }))
 
 const mockExistsSync = vi.mocked(existsSync)
 const mockReadFileSync = vi.mocked(readFileSync)
@@ -170,4 +170,64 @@ describe('scanMCPConfigs', () => {
     // Should find all 4 locations
     expect(configs).toHaveLength(4)
   })
+})
+
+describe('mixed server entries with fake filesystem only', () => {
+  it.each([true, false])(
+    'keeps valid neighbors regardless of invalid entry order: %s',
+    async (invalidFirst) => {
+      mockExistsSync.mockReturnValue(true)
+      const valid = { command: 'synthetic', args: ['example'] }
+      mockReadFileSync.mockReturnValue(
+        JSON.stringify({
+          mcpServers: invalidFirst ? { invalid: {}, valid } : { valid, invalid: {} },
+        })
+      )
+      const configs = await scanMCPConfigs()
+      expect(configs).toHaveLength(4)
+      for (const config of configs) expect(config.servers).toEqual({ valid })
+    }
+  )
+  it('rejects primitives, arrays and blank or non-string identifying fields', async () => {
+    mockExistsSync.mockReturnValue(true)
+    mockReadFileSync.mockReturnValue(
+      JSON.stringify({
+        mcpServers: {
+          nil: null,
+          array: [],
+          primitive: 'node',
+          blank: { command: '  ' },
+          numeric: { command: 42 },
+          remote: { url: 'https://example.invalid/mcp' },
+        },
+      })
+    )
+    const configs = await scanMCPConfigs()
+    expect(configs).toHaveLength(4)
+    for (const config of configs) expect(Object.keys(config.servers)).toEqual(['remote'])
+  })
+})
+
+describe('safe configuration diagnostics', () => {
+  afterEach(() => vi.restoreAllMocks())
+  it.each(['parse', 'read'])(
+    'does not log raw config or exception contents on %s failure',
+    async (failure) => {
+      const canary = 'SYNTHETIC_PRIVATE_CONFIG_CANARY'
+      mockExistsSync.mockImplementation((path) => String(path).includes('.cursor/mcp_config.json'))
+      if (failure === 'read') {
+        mockReadFileSync.mockImplementation(() => {
+          throw new Error(canary)
+        })
+      } else {
+        mockReadFileSync.mockReturnValue(`${canary} not JSON`)
+      }
+      const diagnostic = vi.spyOn(console, 'error').mockImplementation(() => {})
+      expect(await scanMCPConfigs()).toEqual([])
+      expect(diagnostic.mock.calls).toEqual([
+        ['Could not read or parse Cursor configuration. Check file access and JSON syntax.'],
+      ])
+      expect(diagnostic.mock.calls.flat().map(String).join(' ')).not.toContain(canary)
+    }
+  )
 })

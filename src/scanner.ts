@@ -39,22 +39,27 @@ export async function scanMCPConfigs(): Promise<MCPConfig[]> {
         // Different tools have different structures
         const servers = parsed.mcpServers || parsed.servers || {}
 
-        // Only add if we found actual MCP server configs
-        // (not just any JSON file)
-        if (servers && Object.keys(servers).length > 0 && typeof servers === 'object') {
-          // Verify it looks like MCP config (has command/transport fields)
-          const firstServer = Object.values(servers)[0] as any
-          if (firstServer && (firstServer.command || firstServer.transport || firstServer.url)) {
-            configs.push({
-              path: location.path,
-              name: location.name,
-              servers,
+        // Validate entries independently: malformed neighbors must not hide valid servers.
+        if (servers && typeof servers === 'object' && !Array.isArray(servers)) {
+          const validServers = Object.fromEntries(
+            Object.entries(servers).filter(([, server]) => {
+              if (!server || typeof server !== 'object' || Array.isArray(server)) return false
+              return ['command', 'transport', 'url'].some((field) => {
+                const value = (server as Record<string, unknown>)[field]
+                return typeof value === 'string' && value.trim().length > 0
+              })
             })
+          )
+          if (Object.keys(validServers).length > 0) {
+            configs.push({ path: location.path, name: location.name, servers: validServers })
           }
         }
-      } catch (error) {
-        // Skip invalid JSON
-        console.error(`Error reading ${location.name}:`, error)
+      } catch {
+        // Parser and filesystem errors can contain raw config fragments or sensitive paths.
+        // Report only the fixed client label, never the exception or input.
+        console.error(
+          `Could not read or parse ${location.name} configuration. Check file access and JSON syntax.`
+        )
       }
     }
   }
