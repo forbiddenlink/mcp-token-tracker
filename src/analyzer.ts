@@ -4,6 +4,13 @@ import { connectAndQuery, type ServerConfig, type Tool } from './connector.js'
 import type { MCPConfig } from './scanner.js'
 import { formatTimeAgo, getUsageStats } from './usage.js'
 
+/**
+ * Placeholder rate used only to give a rough dollar figure. It is not a current
+ * price for any specific model, so every cost shown is labelled an estimate.
+ */
+const PLACEHOLDER_USD_PER_1K_TOKENS = 0.002
+const SESSIONS_PER_MONTH = 30
+
 export interface ServerAnalysis {
   name: string
   tokens: number
@@ -37,6 +44,8 @@ function estimateTokens(serverConfig: unknown, enc: ReturnType<typeof encoding_f
   const configString = JSON.stringify(serverConfig, null, 2)
   const configTokens = enc.encode(configString).length
   // Rough multiplier: each server typically has 5-10 tools, each ~100-200 tokens
+  // Estimate mode never connects to the server, so the real tool list is unknown.
+  // These are assumptions, not measurements; use --live for measured counts.
   const estimatedTools = 8
   const tokensPerTool = 150
   return configTokens + estimatedTools * tokensPerTool
@@ -47,6 +56,8 @@ export interface ConfigAnalysis {
   path: string
   totalTokens: number
   monthlyCost: number
+  /** True when any server's token count is a guess rather than a measured tool list. */
+  isEstimate: boolean
   servers: ServerAnalysis[]
   failures: Array<{ name: string; error: string }>
 }
@@ -86,7 +97,7 @@ export async function analyzeTokens(
       if (result.success && result.tools) {
         const tokens = countToolTokens(result.tools, enc)
         totalTokens += tokens
-        const estimatedCost = (tokens / 1000) * 0.002
+        const estimatedCost = (tokens / 1000) * PLACEHOLDER_USD_PER_1K_TOKENS
 
         serverAnalysis.push({
           name: serverName,
@@ -101,7 +112,7 @@ export async function analyzeTokens(
         // Fall back to estimate
         const tokens = estimateTokens(serverConfig, enc)
         totalTokens += tokens
-        const estimatedCost = (tokens / 1000) * 0.002
+        const estimatedCost = (tokens / 1000) * PLACEHOLDER_USD_PER_1K_TOKENS
 
         serverAnalysis.push({
           name: serverName,
@@ -118,7 +129,7 @@ export async function analyzeTokens(
       // Estimate mode (original behavior)
       const tokens = estimateTokens(serverConfig, enc)
       totalTokens += tokens
-      const estimatedCost = (tokens / 1000) * 0.002
+      const estimatedCost = (tokens / 1000) * PLACEHOLDER_USD_PER_1K_TOKENS
       const stats = usageStats.get(serverName)
 
       serverAnalysis.push({
@@ -134,12 +145,24 @@ export async function analyzeTokens(
 
   enc.free()
 
-  const monthlyCost = (totalTokens / 1000) * 0.002 * 30 // 30 sessions/month estimate
+  const monthlyCost = (totalTokens / 1000) * PLACEHOLDER_USD_PER_1K_TOKENS * SESSIONS_PER_MONTH
+  const anyEstimate = serverAnalysis.some((a) => a.isEstimate)
+
+  // Estimates are near-identical per server, so ranking by them is meaningless.
+  // Rank by measured tokens only when every number is measured; otherwise by
+  // observed usage (calls), then name.
+  serverAnalysis.sort((a, b) =>
+    anyEstimate
+      ? (b.callCount ?? 0) - (a.callCount ?? 0) || a.name.localeCompare(b.name)
+      : b.tokens - a.tokens || a.name.localeCompare(b.name)
+  )
+
   const result: ConfigAnalysis = {
     name: config.name,
     path: config.path,
     totalTokens,
     monthlyCost,
+    isEstimate: anyEstimate,
     servers: serverAnalysis,
     failures,
   }
@@ -147,6 +170,21 @@ export async function analyzeTokens(
   if (!shouldPrint) return result
 
   // Display results
+  if (anyEstimate) {
+    console.log(
+      chalk.yellow(
+        liveMode
+          ? 'Some numbers below are estimates (marked ~): those servers could not be queried.'
+          : 'Estimate mode: numbers are rough guesses (marked ~), not measurements.'
+      )
+    )
+    console.log(
+      chalk.gray(
+        '  Each unmeasured server is assumed to expose ~8 tools at ~150 tokens each, so they all look alike.'
+      )
+    )
+    console.log(chalk.gray('  Run with --live to measure the real tool lists.\n'))
+  }
   console.log(chalk.white('Servers:'))
   for (const analysis of serverAnalysis) {
     // Icon: warning if estimate in live mode, or if no calls and we have usage data
@@ -156,14 +194,13 @@ export async function analyzeTokens(
     const toolInfo =
       analysis.toolCount !== undefined
         ? chalk.gray(`(${analysis.toolCount} tools)`.padEnd(12))
-        : liveMode && analysis.isEstimate
+        : analysis.isEstimate
           ? chalk.gray('(estimate)'.padEnd(12))
           : '            '
 
-    const tokenStr =
-      analysis.isEstimate && liveMode
-        ? `~${analysis.tokens.toLocaleString()}`
-        : analysis.tokens.toLocaleString()
+    const tokenStr = analysis.isEstimate
+      ? `~${analysis.tokens.toLocaleString()}`
+      : analysis.tokens.toLocaleString()
 
     // Usage info (only show if we have usage data)
     const usageStr = hasUsageData
@@ -181,13 +218,18 @@ export async function analyzeTokens(
   console.log(chalk.gray(`\n${'─'.repeat(60)}`))
   console.log(
     `  ${chalk.white.bold('Total:')} ` +
-      `${chalk.yellow.bold(totalTokens.toLocaleString())} tokens ` +
+      `${chalk.yellow.bold(`${anyEstimate ? '~' : ''}${totalTokens.toLocaleString()}`)} tokens ` +
       `${chalk.gray(`(~${(totalTokens / 1000).toFixed(1)}k)`)}`
   )
 
   console.log(
     `  ${chalk.white.bold('Est. Monthly Cost:')} ` +
-      `${chalk.green.bold(`$${monthlyCost.toFixed(2)}`)}`
+      `${chalk.green.bold(`~$${monthlyCost.toFixed(2)}`)}`
+  )
+  console.log(
+    chalk.gray(
+      `  (placeholder rate $${PLACEHOLDER_USD_PER_1K_TOKENS}/1k tokens x ${SESSIONS_PER_MONTH} sessions; not a current model price)`
+    )
   )
 
   // Show connection failures
