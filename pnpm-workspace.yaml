@@ -1,0 +1,3 @@
+# Supply-chain cooldown: pnpm refuses package versions published less than 7 days ago,
+# the window in which worm-style npm compromises (Shai-Hulud) are usually caught and pulled.
+minimumReleaseAge: 10080
